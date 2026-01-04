@@ -1,0 +1,56 @@
+Machine-Learning-Driven Approach to Designing Efficient Deep Network Architectures
+
+import numpy as np
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.core.problem import Problem
+from pymoo.optimize import minimize
+from pymoo.visualization.scatter import Scatter
+
+# Define the multi-objective problem
+class ArchitectureSearchProblem(Problem):
+    def __init__(self, n_var=10, n_obj=3, n_constr=2, xl=-5, xu=5, L_max=10, P_max=100):
+        super().__init__(n_var=n_var, n_obj=n_obj, n_constr=n_constr, xl=xl, xu=xu)
+        self.L_max = L_max
+        self.P_max = P_max
+
+    def _evaluate(self, x, out, *args, **kwargs):
+        # Mock objectives
+        # f1: -Accuracy (minimize -acc, so maximize acc)
+        acc = 1 / (1 + np.linalg.norm(x, axis=1))  # Mock accuracy
+        f1 = -acc
+
+        # f2: Latency
+        f2 = np.sum(x**2, axis=1)  # Mock latency
+
+        # f3: Params
+        f3 = np.prod(np.abs(x) + 1, axis=1)  # Mock params
+
+        out["F"] = np.column_stack([f1, f2, f3])
+
+        # Constraints: Latency <= L_max, Params <= P_max
+        g1 = f2 - self.L_max
+        g2 = f3 - self.P_max
+        out["G"] = np.column_stack([g1, g2])
+
+# Run the algorithm
+problem = ArchitectureSearchProblem()
+
+algorithm = NSGA2(pop_size=50)
+
+res = minimize(problem,
+               algorithm,
+               ('n_gen', 100),
+               seed=1,
+               verbose=False)
+
+# Print Pareto front
+print("Pareto Front:")
+print(res.F)
+
+# Visualize
+plot = Scatter()
+plot.add(res.F, color="red")
+plot.show()
+
+output :
+
